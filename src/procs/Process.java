@@ -70,25 +70,9 @@ public class Process
 	 * the first instruction of the Process
 	 * @param length The total number of instructions
 	 * making up this Process
-	 * 
-	 * @throws IndexOutOfBoundsException Signals that the
-	 * specified address is not within the core bounds.
 	 */
 	public Process(int address, int length)
-		throws IndexOutOfBoundsException
-	{
-		// Check core address
-		if (address < 0 || address > Core.CORE_SIZE)
-		{
-			throw new IndexOutOfBoundsException("Invalid Core address specified");
-		}
-		
-		// Check for silly lengths
-		if (length < 1 || length > Core.CORE_SIZE)
-		{
-			throw new IndexOutOfBoundsException("Invalid Process length specified");
-		}
-		
+	{	
 		this.length = length;
 		
 		// Set instruction pointer to first address
@@ -111,11 +95,48 @@ public class Process
 	}
 	
 	/**
+	 * Returns the current value of the Process instruction pointer,
+	 * which is expressed relative to the first instruction of the Process
+	 * (at position zero)
+	 * 
+	 * @return The instruction pointer value
+	 */
+	public int ptr()
+	{
+		return (ptr);
+	}
+	
+	/**
 	 * @return The absolute address of the first instruction of this Process
 	 * in the core
 	 */
 	public int address()
 	{
 		return (address);
+	}
+	
+	/**
+	 * @return The number of instructions in this Process
+	 */
+	public int length()
+	{
+		return (length);
+	}
+	
+	/**
+	 * Increments the instruction pointer, wrapping around
+	 * to the first instruction if necessary.
+	 */
+	public void incrementPtr()
+	{
+		ptr++;
+		
+		if (ptr == length)
+		{
+			// We have gone beyond the last instruction
+			ptr = 0;
+		}
+		
+		numExecutions++;
 	}
 }
