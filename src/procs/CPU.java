@@ -1,8 +1,11 @@
 package procs;
 
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Random;
 import java.util.Vector;
 
 /**
@@ -39,38 +42,124 @@ public class CPU
 	// are created by hashing the string derived by
 	// concatenating the ordered Process instructions together,
 	// while the values are the instructions lists themselves
-	private Map<Integer, String[]> typeRegister;
+	private Map<byte[], String[]> genomes;
 	
 	// Map to hold details of the range of lifetimes of 
 	// currently executing Processes. Keys are lifetimes and values
 	// are number of processes with that lifetime.
-	private Map<Integer, Integer> lifetimeRegister;
+	private Map<byte[], Integer> lifetimes;
 	
 	// Core in which to execute Processes
 	private Core core;
 	
+	// The digest algorithm to be used to hash lists of 
+	// instructions
+	private MessageDigest md;
+	
+	// Ancestral process with which to initially 
+	// innoculate the Core
+	private String[] ancestor = 
+		{Process.NOP, Process.NOP, Process.SPW, 
+		 Process.NOP, Process.NOP};
+	
+	/**
+	 * Initialises the system, innoculating the Core
+	 * with a predefined ancestor Process.
+	 */
 	public CPU()
 	{
 		processList = new Vector<Process>();
 		
-		typeRegister = new HashMap<Integer, String[]>();
+		genomes = new HashMap<byte[], String[]>();
 		
-		lifetimeRegister = new HashMap<Integer, Integer>();
+		lifetimes = new HashMap<byte[], Integer>();
 		
 		core = new Core(CORE_SIZE);
+		
+		// Define the message digest algorithm to use
+		try 
+		{
+			md = MessageDigest.getInstance("SHA");
+		} 
+		catch (NoSuchAlgorithmException e) 
+		{
+			// Should never happen, we specified SHA, a valid algorithm
+			System.err.println("Invalid hash algorithm specified " +
+				               "during initialisation");
+			assert false;
+		}
+		
+		// Innoculate the core with the ancestor
+		// starting at a random address
+		
+		try
+		{
+			// Get a random location in the Core
+			Random random = new Random();
+			int address = random.nextInt(CORE_SIZE);
+		
+			// Add the process at that location
+			core.addProcess(ancestor, address);
+		
+			// Create a corresponding Process and add it to the list
+			// of current processes
+			Process process = new Process(address, ancestor.length);
+			processList.add(process);
+		
+			// Register in the table of unique processes and process 
+			// lifetimes
+			byte[] procDigest = digest(ancestor);
+		
+			genomes.put(procDigest, ancestor);
+			lifetimes.put(procDigest, 0);
+		}
+		catch (IndexOutOfBoundsException e)
+		{
+			// Should not encounter an invalid core
+			// address
+			System.err.println("Invalid core address specified " +
+						       "during initialisation");
+			assert false;
+		}
+		
 	}
 	
 	/**
-	 * Adds a new process to the Core and starts executing it
+	 * Generates a digest for the specified list
+	 * of instructions.
 	 * 
-	 * @param instructions The ordered list of instructions making
-	 * up the Process, expressed as an array of strings
-	 * @param address The address in the Core where the first instruction
-	 * should be stored
+	 * @param instructions The list of instructions
+	 * 
+	 * @return The digest generated from the instructions
 	 */
-	public void createProcess(String[] instructions, int address)
-	{
+	private byte[] digest(final String[] instructions)
+	{	
+		byte[] digest = {};
 		
+		// Create a hash of this string array using the 
+		// specified algorithm
+		for (int index=0; index<instructions.length-1; index++)
+		{
+			md.update(instructions[index].getBytes());
+		}
+		// Complete the digest with the final block
+		digest = md.digest(instructions[instructions.length-1].getBytes());
+		
+		return (digest);
+	}
+	
+	/**
+	 * Kills the specified Process
+	 * 
+	 * @param proc The Process to be killed
+	 */
+	public void killProcess(final Process process)
+	{
+		// Remove its instructions from the Core
+		core.removeProcess(process);
+		
+		// Remove the Process from the execution list
+		processList.remove(process);		
 	}
 	
 	/**
@@ -97,17 +186,31 @@ public class CPU
 					case Core.EMPTY:
 						// Kill the process, rogue
 						// instruction pointer
-						
-						// TODO
+						killProcess(process);
 						
 						break;
 						
 					case Process.NOP:
 						// Do nothing
+						
+						break;
+					
+					case Process.JMP:
+						
+						break;
+						
+					case Process.SPW:
+						
+						break;
+						
+					case Process.CPN:
+						
 						break;
 						
 					default:
-						// TODO
+						// Something is screwy here,
+						// kill the process
+						killProcess(process);
 				}
 			}
 			catch (IndexOutOfBoundsException e)
@@ -121,11 +224,8 @@ public class CPU
 			// Check if the lifetime has been exceeded
 			if (process.numExecutions() > CPU.LIFETIME)
 			{
-				// Remove the instructions from the Core
-				// TODO
-				
-				// Delete the Process from the list
-				processList.remove(process); // *** Can i remove within loop? ***
+				// Kill the process
+				killProcess(process); // *** Can i remove within loop? ***
 			}
 		}
 	}
@@ -141,5 +241,10 @@ public class CPU
 	{
 		//TODO
 		return ("");
+	}
+	
+	public static void main(String[] args)
+	{
+		//TODO
 	}
 }

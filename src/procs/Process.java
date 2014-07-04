@@ -71,8 +71,8 @@ public class Process
 	 * @param length The total number of instructions
 	 * making up this Process
 	 */
-	public Process(int address, int length)
-	{	
+	public Process(final int address, final int length)
+	{		
 		this.length = length;
 		
 		// Set instruction pointer to first address
