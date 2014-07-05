@@ -79,15 +79,7 @@ public class Core
 		boolean isSpace = true;
 		for (int index=0;index<instructions.length;index++)
 		{
-			int location;
-			if (index+address >= core.length)
-			{
-				location = (index+address) % core.length;
-			}
-			else
-			{
-				location = index+address;
-			}
+			int location = (index+address) % core.length;
 			
 			if (!core[location].equals(Core.EMPTY)
 				&&
@@ -103,16 +95,8 @@ public class Core
 		{
 			for (int index=0;index<instructions.length;index++)
 			{
-				int location;
-				if (index+address > core.length)
-				{
-					location = (index+address) % core.length;
-				}
-				else
-				{
-					location = index+address;
-				}
-				
+				int location = (index+address) % core.length;
+
 				core[location] = instructions[index];
 			}
 		}
@@ -145,15 +129,7 @@ public class Core
 		
 		for (int index=0;index<process.length();index++)
 		{
-			int location;
-			if (index+address >= core.length)
-			{
-				location = (index+address) % core.length;
-			}
-			else
-			{
-				location = index+address;
-			}
+			int location = (index+address) % core.length;
 			
 			instructions[index] = core[location];
 		}
@@ -174,21 +150,13 @@ public class Core
 		// Get start address of Process
 		int address = process.address();
 		
-		// Do nothing for invalud processes
+		// Do nothing for invalid processes
 		if (address >= 0 && address < core.length &&
 			process.length() <= core.length)
 		{
 			for (int index=0;index<process.length();index++)
 			{
-				int location;
-				if (index+address > core.length)
-				{
-					location = (index+address) % core.length;
-				}
-				else
-				{
-					location = index+address;
-				}
+				int location = (index+address) % core.length;
 			
 				core[location] = Core.EMPTY;
 			}
