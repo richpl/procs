@@ -153,7 +153,7 @@ public class CPU
 	 * 
 	 * @param proc The Process to be killed
 	 */
-	public void killProcess(final Process process)
+	private void killProcess(final Process process)
 	{
 		// Remove its instructions from the Core
 		core.removeProcess(process);

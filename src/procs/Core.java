@@ -1,8 +1,5 @@
 package procs;
 
-import java.util.HashMap;
-import java.util.Map;
-
 /**
  * Models a simple computer memory capable of hosting multiple
  * instances of the Process type. The memory consists of a circular
