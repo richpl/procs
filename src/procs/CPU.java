@@ -36,7 +36,7 @@ public class CPU
 	
 	// List of current Processes, defined as a list 
 	// of core addresses that hold their first instruction
-	private List<Process> processList;
+	private List<Process> processes;
 	
 	// Map to hold details of unique Processes. Keys
 	// are created by hashing the string derived by
@@ -68,7 +68,7 @@ public class CPU
 	 */
 	public CPU()
 	{
-		processList = new Vector<Process>();
+		processes = new Vector<Process>();
 		
 		genomes = new HashMap<byte[], String[]>();
 		
@@ -104,7 +104,7 @@ public class CPU
 			// Create a corresponding Process and add it to the list
 			// of current processes
 			Process process = new Process(address, ancestor.length);
-			processList.add(process);
+			processes.add(process);
 		
 			// Register in the table of unique processes and process 
 			// lifetimes
@@ -159,7 +159,35 @@ public class CPU
 		core.removeProcess(process);
 		
 		// Remove the Process from the execution list
-		processList.remove(process);		
+		processes.remove(process);		
+	}
+	
+	/**
+	 * Modifies the instruction pointer in response to a JMP
+	 * instruction
+	 * 
+	 * @param process The process whose instruction pointer is
+	 * to be modified
+	 * @param instruction The JMP instruction
+	 */
+	private void movePtr(Process process, String instruction)
+	{
+		//TODO
+	}
+	
+	/**
+	 * Spawns a new copy of the specified process in a free portion
+	 * of the core (either can empty area or a NOP sled within a 
+	 * process that can accommodate the instructions). A process within
+	 * an empty portion of the core gets its own execution thread, a
+	 * process within a host's NOP sled executes using the execution 
+	 * thread of the host.
+	 * 
+	 * @param process The process to be spawned
+	 */
+	private void spawnProcess(Process process)
+	{
+		//TODO
 	}
 	
 	/**
@@ -169,7 +197,7 @@ public class CPU
 	 */
 	public void execute()
 	{
-		for (Process process: processList)
+		for (Process process: processes)
 		{
 			// Get core address of current instruction,
 			// derived from relative value of instruction
@@ -196,10 +224,15 @@ public class CPU
 						break;
 					
 					case Process.JMP:
+						// Modify the instruction pointer
+						movePtr(process, instruction);
 						
 						break;
 						
 					case Process.SPW:
+						// Spawn a copy of this process in
+						// a random location in the core
+						spawnProcess(process);
 						
 						break;
 						
@@ -228,6 +261,37 @@ public class CPU
 				killProcess(process); // *** Can i remove within loop? ***
 			}
 		}
+	}
+	
+	/**
+	 * Returns a string representation of the process, as a bracketed
+	 * list of instructions.
+	 * 
+	 * @param process The process to be represented as a string.
+	 * 
+	 * @return The string representation of the process.
+	 */
+	private String processToString(Process process)
+	{
+		String[] instructions = core.getInstructions(process);
+		
+		StringBuilder stringBuilder = new StringBuilder();
+		stringBuilder.append("[");
+		
+		boolean firstInstruction = true;
+		for (String instruction: instructions)
+		{
+			if (!firstInstruction)
+			{
+				stringBuilder.append(";");
+			}
+			
+			stringBuilder.append(instruction);
+		}
+		
+		stringBuilder.append("]");
+		
+		return (stringBuilder.toString());
 	}
 	
 	/**
