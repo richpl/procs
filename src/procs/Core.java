@@ -182,5 +182,40 @@ public class Core
 		return (core[address]);
 	}
 	
+	/**
+	 * Returns a string representation of the process, as a bracketed
+	 * list of instructions.
+	 * 
+	 * @param process The process to be represented as a string.
+	 * 
+	 * @return The string representation of the process.
+	 */
+	public String processToString(Process process)
+	{
+		String[] instructions = getInstructions(process);
+		
+		StringBuilder stringBuilder = new StringBuilder();
+		stringBuilder.append("[");
+		
+		boolean isFirst = true;
+		for (String instruction: instructions)
+		{
+			if (!isFirst)
+			{
+				stringBuilder.append(";");
+			}
+			else
+			{
+				isFirst = false;
+			}
+			
+			stringBuilder.append(instruction);
+		}
+		
+		stringBuilder.append("]");
+		
+		return (stringBuilder.toString());
+	}
+	
 }
 

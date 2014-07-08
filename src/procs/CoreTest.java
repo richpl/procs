@@ -14,6 +14,9 @@ public class CoreTest
 		{Process.NOP, Process.NOP, Process.SPW, 
 		 Process.NOP, Process.NOP};
 	
+	private final String ANCESTOR_STRING = 
+		"[NOP;NOP;SPW;NOP;NOP]";
+	
 	private Core core;
 	
 	private Process process;
@@ -100,4 +103,11 @@ public class CoreTest
 		}
 	}
 
+	@Test
+	public final void testProcessToString()
+	{
+		assertEquals("Incorrect instruction string",
+				     core.processToString(process),
+				     ANCESTOR_STRING);
+	}
 }

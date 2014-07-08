@@ -3,9 +3,11 @@ package procs;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
+import java.util.Set;
 import java.util.Vector;
 
 /**
@@ -43,12 +45,7 @@ public class CPU
 	// concatenating the ordered Process instructions together,
 	// while the values are the instructions lists themselves
 	private Map<byte[], String[]> genomes;
-	
-	// Map to hold details of the range of lifetimes of 
-	// currently executing Processes. Keys are lifetimes and values
-	// are number of processes with that lifetime.
-	private Map<byte[], Integer> lifetimes;
-	
+
 	// Core in which to execute Processes
 	private Core core;
 	
@@ -62,6 +59,14 @@ public class CPU
 		{Process.NOP, Process.NOP, Process.SPW, 
 		 Process.NOP, Process.NOP};
 	
+	// Number of attempts to find random locations in the
+	// core in which to spawn a process or drop a NOP bomb
+	private final int ATTEMPTS = 10;
+	
+	// Random number generator to be used in a number
+	// of methods
+	private Random random;
+	
 	/**
 	 * Initialises the system, innoculating the Core
 	 * with a predefined ancestor Process.
@@ -71,8 +76,6 @@ public class CPU
 		processes = new Vector<Process>();
 		
 		genomes = new HashMap<byte[], String[]>();
-		
-		lifetimes = new HashMap<byte[], Integer>();
 		
 		core = new Core(CORE_SIZE);
 		
@@ -95,7 +98,7 @@ public class CPU
 		try
 		{
 			// Get a random location in the Core
-			Random random = new Random();
+			random = new Random();
 			int address = random.nextInt(CORE_SIZE);
 		
 			// Add the process at that location
@@ -111,7 +114,6 @@ public class CPU
 			byte[] procDigest = digest(ancestor);
 		
 			genomes.put(procDigest, ancestor);
-			lifetimes.put(procDigest, 0);
 		}
 		catch (IndexOutOfBoundsException e)
 		{
@@ -187,6 +189,67 @@ public class CPU
 	 */
 	private void spawnProcess(Process process)
 	{
+		// Have ten attempts at spawning the process
+		for (int attempts=0; attempts<ATTEMPTS; attempts++)
+		{
+			// Get a random core address
+			int address = random.nextInt(CORE_SIZE);
+			
+			// See if there is sufficient empty space for a 
+			// copy of the process
+			boolean allEmpty = true;
+			for (int index=0; index<process.length(); index++)
+			{
+				int location = address+index % CORE_SIZE;
+				
+				if (core.getInstruction(location) != Core.EMPTY)
+				{
+					allEmpty = false;
+				}
+			}
+			
+			// If there is empty space, make a copy
+			// of the process and spawn a new execution
+			// thread
+			if (allEmpty)
+			{
+				// Get a copy of the instructions for
+				// the process
+				String[] instructions = core.getInstructions(process);
+				
+				// Make a new copy in the core
+				core.addProcess(instructions, address);
+				
+				// Create a new process to execute
+				Process newProcess = new Process(address, process.length());
+				processes.add(newProcess);
+				
+				// Update the unique genomes repository
+				genomes.put(digest(instructions), instructions);
+				
+				// Exit the loop
+				break;
+			}
+			else
+			{
+				// Look for a NOP sled that can accommodate
+				// the process
+				
+				//TODO
+			}
+		}
+	}
+	
+	/**
+	 * Copies a NOP to a random location in the core that is not
+	 * empty and not part of the process executing the copy (i.e.
+	 * the NOP should land within another executing process, possibly
+	 * disrupting its operation).
+	 * 
+	 * @param process The process launching the NOP bom
+	 */
+	private void copyNOP(Process process)
+	{
 		//TODO
 	}
 	
@@ -237,6 +300,10 @@ public class CPU
 						break;
 						
 					case Process.CPN:
+						// Copy a NOP to a random location
+						// in the core that is not empty and
+						// not occupied by this process
+						copyNOP(process);
 						
 						break;
 						
@@ -264,26 +331,71 @@ public class CPU
 	}
 	
 	/**
-	 * Returns a string representation of the process, as a bracketed
+	 * Returns a string representation of the specified
+	 * byte array, with the values represented in hex. The
+	 * values are comma separated and enclosed within square
+	 * brackets.
+	 * 
+	 * @param array The byte array
+	 * 
+	 * @return Bracketed string representation of hex values
+	 */
+	private String toHexString(final byte[] array)
+	{
+		final StringBuilder str = new StringBuilder();
+		
+		str.append("[");
+		
+		boolean isFirst = true;
+		for(int idx=0; idx<array.length; idx++)
+		{
+			final byte b = array[idx];
+			
+			if (isFirst)
+			{			
+				//str.append(Integer.toHexString(i));
+				isFirst = false;
+			}
+			else
+			{
+				//str.append("," + Integer.toHexString(i));
+				str.append(",");
+			}
+			
+			final int hiVal = (b & 0xF0) >> 4;
+	        final int loVal = b & 0x0F;
+	        str.append((char) ('0' + (hiVal + (hiVal / 10 * 7))));
+	        str.append((char) ('0' + (loVal + (loVal / 10 * 7))));
+		}
+		
+		str.append("]");
+		
+		return(str.toString());
+	}
+	
+	/**
+	 * Returns a string representation of the instruction list, as a bracketed
 	 * list of instructions.
 	 * 
-	 * @param process The process to be represented as a string.
+	 * @param process The instruction list.
 	 * 
-	 * @return The string representation of the process.
+	 * @return The string representation of the instructions.
 	 */
-	private String processToString(Process process)
-	{
-		String[] instructions = core.getInstructions(process);
-		
+	private String instructionsToString(String[] instructions)
+	{	
 		StringBuilder stringBuilder = new StringBuilder();
 		stringBuilder.append("[");
 		
-		boolean firstInstruction = true;
+		boolean isFirst = true;
 		for (String instruction: instructions)
 		{
-			if (!firstInstruction)
+			if (!isFirst)
 			{
 				stringBuilder.append(";");
+			}
+			else
+			{
+				isFirst = false;
 			}
 			
 			stringBuilder.append(instruction);
@@ -295,20 +407,49 @@ public class CPU
 	}
 	
 	/**
-	 * Returns metrics on currently executing processes,
-	 * expressed as a String.
-	 * 
-	 * @return Newline separated pairs specifying Process lengths and 
-	 * number of current Processes of that length
+	 * Pretty prints the list of unique genomes present in the core.
 	 */
-	public String getMetrics()
+	public void prettyPrintGenomes()
 	{
-		//TODO
-		return ("");
+		Set<Map.Entry<byte[], String[]>> entrySet = genomes.entrySet();
+		Iterator<Map.Entry<byte[], String[]>> iter = entrySet.iterator();
+		
+		while (iter.hasNext())
+		{
+			Map.Entry<byte[], String[]> entry = iter.next();
+			
+			System.out.print(toHexString(entry.getKey()));
+			System.out.print(": ");
+			System.out.println(instructionsToString(entry.getValue()));
+		}
+	}
+	
+	/**
+	 * Pretty prints metrics on currently executing processes,
+	 * including number of currently executing processes,
+	 * unique genomes present in the core, and distribution of 
+	 * current process lifetimes.
+	 */
+	public void prettyPrintMetrics()
+	{
+		System.out.println("Number of processes: " + processes.size());
+		System.out.println();
+		
+		System.out.println("Genomes:");
+		prettyPrintGenomes();
+		System.out.println();
 	}
 	
 	public static void main(String[] args)
 	{
-		//TODO
+		CPU cpu = new CPU();
+		
+		// Carry out ten executions
+		for (int index=0; index<10; index++)
+		{
+			cpu.execute();
+			
+			cpu.prettyPrintMetrics();
+		}
 	}
 }
