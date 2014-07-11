@@ -2,6 +2,7 @@ package procs;
 
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -44,7 +45,7 @@ public class CPU
 	// are created by hashing the string derived by
 	// concatenating the ordered Process instructions together,
 	// while the values are the instructions lists themselves
-	private Map<byte[], String[]> genomes;
+	private Map<Integer, String[]> genomes;
 
 	// Core in which to execute Processes
 	private Core core;
@@ -75,7 +76,7 @@ public class CPU
 	{
 		processes = new Vector<Process>();
 		
-		genomes = new HashMap<byte[], String[]>();
+		genomes = new HashMap<Integer, String[]>();
 		
 		core = new Core(CORE_SIZE);
 		
@@ -111,9 +112,7 @@ public class CPU
 		
 			// Register in the table of unique processes and process 
 			// lifetimes
-			byte[] procDigest = digest(ancestor);
-		
-			genomes.put(procDigest, ancestor);
+			genomes.put(hash(ancestor), ancestor);
 		}
 		catch (IndexOutOfBoundsException e)
 		{
@@ -127,14 +126,15 @@ public class CPU
 	}
 	
 	/**
-	 * Generates a digest for the specified list
+	 * Generates a hashcode for the specified list
 	 * of instructions.
 	 * 
 	 * @param instructions The list of instructions
 	 * 
-	 * @return The digest generated from the instructions
+	 * @return The hashcode derived from the digest 
+	 * of the instructions
 	 */
-	private byte[] digest(final String[] instructions)
+	private int hash(final String[] instructions)
 	{	
 		byte[] digest = {};
 		
@@ -147,7 +147,7 @@ public class CPU
 		// Complete the digest with the final block
 		digest = md.digest(instructions[instructions.length-1].getBytes());
 		
-		return (digest);
+		return (Arrays.hashCode(digest));
 	}
 	
 	/**
@@ -225,7 +225,7 @@ public class CPU
 				processes.add(newProcess);
 				
 				// Update the unique genomes repository
-				genomes.put(digest(instructions), instructions);
+				genomes.put(hash(instructions), instructions);
 				
 				// Exit the loop
 				break;
@@ -260,6 +260,14 @@ public class CPU
 	 */
 	public void execute()
 	{
+		// List to keep a note of processes that 
+		// should be killed
+		List<Process> deadProcesses = new Vector<Process>();
+		
+		// List to keep a note of new processes that
+		// need to be added
+		List<Process> newProcesses = new Vector<Process>();
+		
 		for (Process process: processes)
 		{
 			// Get core address of current instruction,
@@ -277,7 +285,7 @@ public class CPU
 					case Core.EMPTY:
 						// Kill the process, rogue
 						// instruction pointer
-						killProcess(process);
+						deadProcesses.add(process);
 						
 						break;
 						
@@ -295,7 +303,7 @@ public class CPU
 					case Process.SPW:
 						// Spawn a copy of this process in
 						// a random location in the core
-						spawnProcess(process);
+						newProcesses.add(process);
 						
 						break;
 						
@@ -310,7 +318,7 @@ public class CPU
 					default:
 						// Something is screwy here,
 						// kill the process
-						killProcess(process);
+						deadProcesses.add(process);
 				}
 			}
 			catch (IndexOutOfBoundsException e)
@@ -325,54 +333,23 @@ public class CPU
 			if (process.numExecutions() > CPU.LIFETIME)
 			{
 				// Kill the process
-				killProcess(process); // *** Can i remove within loop? ***
+				deadProcesses.add(process);
 			}
 		}
-	}
-	
-	/**
-	 * Returns a string representation of the specified
-	 * byte array, with the values represented in hex. The
-	 * values are comma separated and enclosed within square
-	 * brackets.
-	 * 
-	 * @param array The byte array
-	 * 
-	 * @return Bracketed string representation of hex values
-	 */
-	private String toHexString(final byte[] array)
-	{
-		final StringBuilder str = new StringBuilder();
 		
-		str.append("[");
-		
-		boolean isFirst = true;
-		for(int idx=0; idx<array.length; idx++)
+		// Dispose of processes to be killed
+		for (Process process: deadProcesses)
 		{
-			final byte b = array[idx];
-			
-			if (isFirst)
-			{			
-				//str.append(Integer.toHexString(i));
-				isFirst = false;
-			}
-			else
-			{
-				//str.append("," + Integer.toHexString(i));
-				str.append(",");
-			}
-			
-			final int hiVal = (b & 0xF0) >> 4;
-	        final int loVal = b & 0x0F;
-	        str.append((char) ('0' + (hiVal + (hiVal / 10 * 7))));
-	        str.append((char) ('0' + (loVal + (loVal / 10 * 7))));
+			killProcess(process);
 		}
-		
-		str.append("]");
-		
-		return(str.toString());
+
+		// Add newly created processes
+		for (Process process: newProcesses)
+		{
+			spawnProcess(process);
+		}
 	}
-	
+		
 	/**
 	 * Returns a string representation of the instruction list, as a bracketed
 	 * list of instructions.
@@ -411,14 +388,14 @@ public class CPU
 	 */
 	public void prettyPrintGenomes()
 	{
-		Set<Map.Entry<byte[], String[]>> entrySet = genomes.entrySet();
-		Iterator<Map.Entry<byte[], String[]>> iter = entrySet.iterator();
+		Set<Map.Entry<Integer, String[]>> entrySet = genomes.entrySet();
+		Iterator<Map.Entry<Integer, String[]>> iter = entrySet.iterator();
 		
 		while (iter.hasNext())
 		{
-			Map.Entry<byte[], String[]> entry = iter.next();
+			Map.Entry<Integer, String[]> entry = iter.next();
 			
-			System.out.print(toHexString(entry.getKey()));
+			System.out.print(entry.getKey());
 			System.out.print(": ");
 			System.out.println(instructionsToString(entry.getValue()));
 		}
@@ -445,7 +422,7 @@ public class CPU
 		CPU cpu = new CPU();
 		
 		// Carry out ten executions
-		for (int index=0; index<10; index++)
+		for (int index=0; index<10000; index++)
 		{
 			cpu.execute();
 			
