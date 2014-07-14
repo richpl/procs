@@ -200,11 +200,24 @@ public class CPU
 			boolean allEmpty = true;
 			for (int index=0; index<process.length(); index++)
 			{
-				int location = address+index % CORE_SIZE;
+				int location = (address+index) % CORE_SIZE;
 				
 				if (core.getInstruction(location) != Core.EMPTY)
 				{
 					allEmpty = false;
+				}
+			}
+			
+			// See if there is a NOP sled within another process
+			// that could accommodate this instruction list
+			boolean nopSled = true;
+			for (int index=0; index<process.length(); index++)
+			{
+				int location = (address+index) % CORE_SIZE;
+				
+				if (core.getInstruction(location) != Process.NOP)
+				{
+					nopSled = false;
 				}
 			}
 			
@@ -230,12 +243,19 @@ public class CPU
 				// Exit the loop
 				break;
 			}
-			else
+			else if (nopSled)
 			{
-				// Look for a NOP sled that can accommodate
+				// Get a copy of the instructions for
 				// the process
+				String[] instructions = core.getInstructions(process);
 				
-				//TODO
+				// Make a new copy in the core, but do not create 
+				// a new process to execute them, the host process
+				// will do this
+				core.addProcess(instructions, address);
+				
+				// Exit the loop
+				break;
 			}
 		}
 	}
@@ -257,8 +277,11 @@ public class CPU
 	 * Executes the current set of Processes, allowing each
 	 * one to execute and instruction in turn. Kills any Process
 	 * which has reached the end of its lifetime.
+	 * 
+	 * @throws IndexOutOfBoundsException Signals that an invalid core
+	 * address was specified
 	 */
-	public void execute()
+	public void execute() throws IndexOutOfBoundsException
 	{
 		// List to keep a note of processes that 
 		// should be killed
@@ -273,57 +296,49 @@ public class CPU
 			// Get core address of current instruction,
 			// derived from relative value of instruction
 			// pointer and known start address of Process
-			int currentAddr = process.address() + process.ptr();
+			int currentAddr = (process.address()+process.ptr()) % CORE_SIZE;
 			
-			// Execute this instruction
-			try
-			{
-				String instruction = core.getInstruction(currentAddr);
+			String instruction = core.getInstruction(currentAddr);
 				
-				switch(instruction)
-				{
-					case Core.EMPTY:
-						// Kill the process, rogue
-						// instruction pointer
-						deadProcesses.add(process);
-						
-						break;
-						
-					case Process.NOP:
-						// Do nothing
-						
-						break;
-					
-					case Process.JMP:
-						// Modify the instruction pointer
-						movePtr(process, instruction);
-						
-						break;
-						
-					case Process.SPW:
-						// Spawn a copy of this process in
-						// a random location in the core
-						newProcesses.add(process);
-						
-						break;
-						
-					case Process.CPN:
-						// Copy a NOP to a random location
-						// in the core that is not empty and
-						// not occupied by this process
-						copyNOP(process);
-						
-						break;
-						
-					default:
-						// Something is screwy here,
-						// kill the process
-						deadProcesses.add(process);
-				}
-			}
-			catch (IndexOutOfBoundsException e)
+			switch(instruction)
 			{
-				// TODO
+				case Core.EMPTY:
+					// Kill the process, rogue
+					// instruction pointer
+					deadProcesses.add(process);
+						
+					break;
+						
+				case Process.NOP:
+					// Do nothing
+						
+					break;
+					
+				case Process.JMP:
+					// Modify the instruction pointer
+					movePtr(process, instruction);
+						
+					break;
+						
+				case Process.SPW:
+					// Spawn a copy of this process in
+					// a random location in the core
+					newProcesses.add(process);
+						
+					break;
+						
+				case Process.CPN:
+					// Copy a NOP to a random location
+					// in the core that is not empty and
+					// not occupied by this process
+					copyNOP(process);
+						
+					break;
+						
+				default:
+					// Something is screwy here,
+					// kill the process
+					deadProcesses.add(process);
 			}
 			
 			// Increment the instruction pointer
@@ -335,8 +350,9 @@ public class CPU
 				// Kill the process
 				deadProcesses.add(process);
 			}
+			
 		}
-		
+	
 		// Dispose of processes to be killed
 		for (Process process: deadProcesses)
 		{
@@ -422,7 +438,7 @@ public class CPU
 		CPU cpu = new CPU();
 		
 		// Carry out ten executions
-		for (int index=0; index<10000; index++)
+		for (int index=0; index<1000; index++)
 		{
 			cpu.execute();
 			
