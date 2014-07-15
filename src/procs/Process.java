@@ -7,45 +7,6 @@ package procs;
  */
 public class Process 
 {
-	/**
-	 *  Representation of the jump instruction which
-	 *  is used to move the instruction pointer a 
-	 *  specified number of instructions backwards 
-	 *  or forwards (or to the first or last instruction
-	 *  in the Process if that is closer to the jump 
-	 *  address)
-	 */
-	public static final String JMP = "JMP";
-	
-	/**
-	 * Representation of the no operation instruction
-	 */
-	public static final String NOP = "NOP";
-	
-	/**
-	 * Copy NOP instruction (NOP bomb) that copies
-	 * a NOP to a random place in the core, as long as
-	 * the target address is not empty (i.e. can only
-	 * be copied into the instruction list of a Process)
-	 */
-	public static final String CPN = "CPN";
-	
-	/**
-	 * Spawn instruction, which creates a copy of this
-	 * Process starting at a random location within the core.
-	 * However, there must be sufficient empty addresses 
-	 * at and after the target location for the Process to be
-	 * copied. In this case, a new Process is created which will
-	 * begin executing the copied instructions.
-	 * 
-	 * Alternatively, the Process may copy itself to the inside
-	 * of another Process if there are sufficient NOPs at and 
-	 * after the target location for the Process to be copied.
-	 * In this case, no new Process is created, but the instructions
-	 * may be executed by the infected Process.
-	 */
-	public static final String SPW = "SPW";
-	
 	// Number of instructions comprising the Process
 	private int length;
 	

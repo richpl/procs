@@ -10,8 +10,8 @@ public class CoreTest
 	// Test rocess with which to  
 	// innoculate the Core
 	private String[] ancestor = 
-		{Process.NOP, Process.NOP, Process.SPW, 
-		 Process.NOP, Process.NOP};
+		{Instructions.NOP, Instructions.NOP, Instructions.SPW, 
+		 Instructions.NOP, Instructions.NOP};
 	
 	private final String ANCESTOR_STRING = 
 		"[NOP;NOP;SPW;NOP;NOP]";
@@ -44,11 +44,11 @@ public class CoreTest
 	public final void testAddProcess() 
 	{	
 		assertEquals("Incorrect instruction at address 0",
-				     core.getInstruction(0), Process.SPW);
+				     core.getInstruction(0), Instructions.SPW);
 		assertEquals("Incorrect instruction at address 1",
-				     core.getInstruction(1), Process.NOP);
+				     core.getInstruction(1), Instructions.NOP);
 		assertEquals("Incorrect instruction at address 2",
-				     core.getInstruction(2), Process.NOP);
+				     core.getInstruction(2), Instructions.NOP);
 		assertEquals("Incorrect instruction at address 3",
 				     core.getInstruction(3), Core.EMPTY);
 		assertEquals("Incorrect instruction at address 4",
@@ -60,9 +60,9 @@ public class CoreTest
 		assertEquals("Incorrect instruction at address 7",
 				     core.getInstruction(7), Core.EMPTY);
 		assertEquals("Incorrect instruction at address 8",
-				     core.getInstruction(8), Process.NOP);
+				     core.getInstruction(8), Instructions.NOP);
 		assertEquals("Incorrect instruction at address 9",
-				     core.getInstruction(9), Process.NOP);
+				     core.getInstruction(9), Instructions.NOP);
 	}
 
 	@Test

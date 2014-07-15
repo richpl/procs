@@ -57,12 +57,8 @@ public class CPU
 	// Ancestral process with which to initially 
 	// innoculate the Core
 	private String[] ancestor = 
-		{Process.NOP, Process.NOP, Process.SPW, 
-		 Process.NOP, Process.NOP};
-	
-	// Number of attempts to find random locations in the
-	// core in which to spawn a process or drop a NOP bomb
-	private final int ATTEMPTS = 10;
+		{Instructions.NOP, Instructions.NOP, Instructions.SPW, 
+		 Instructions.NOP, Instructions.NOP};
 	
 	// Random number generator to be used in a number
 	// of methods
@@ -165,115 +161,6 @@ public class CPU
 	}
 	
 	/**
-	 * Modifies the instruction pointer in response to a JMP
-	 * instruction
-	 * 
-	 * @param process The process whose instruction pointer is
-	 * to be modified
-	 * @param instruction The JMP instruction
-	 */
-	private void movePtr(Process process, String instruction)
-	{
-		//TODO
-	}
-	
-	/**
-	 * Spawns a new copy of the specified process in a free portion
-	 * of the core (either can empty area or a NOP sled within a 
-	 * process that can accommodate the instructions). A process within
-	 * an empty portion of the core gets its own execution thread, a
-	 * process within a host's NOP sled executes using the execution 
-	 * thread of the host.
-	 * 
-	 * @param process The process to be spawned
-	 */
-	private void spawnProcess(Process process)
-	{
-		// Have ten attempts at spawning the process
-		for (int attempts=0; attempts<ATTEMPTS; attempts++)
-		{
-			// Get a random core address
-			int address = random.nextInt(CORE_SIZE);
-			
-			// See if there is sufficient empty space for a 
-			// copy of the process
-			boolean allEmpty = true;
-			for (int index=0; index<process.length(); index++)
-			{
-				int location = (address+index) % CORE_SIZE;
-				
-				if (core.getInstruction(location) != Core.EMPTY)
-				{
-					allEmpty = false;
-				}
-			}
-			
-			// See if there is a NOP sled within another process
-			// that could accommodate this instruction list
-			boolean nopSled = true;
-			for (int index=0; index<process.length(); index++)
-			{
-				int location = (address+index) % CORE_SIZE;
-				
-				if (core.getInstruction(location) != Process.NOP)
-				{
-					nopSled = false;
-				}
-			}
-			
-			// If there is empty space, make a copy
-			// of the process and spawn a new execution
-			// thread
-			if (allEmpty)
-			{
-				// Get a copy of the instructions for
-				// the process
-				String[] instructions = core.getInstructions(process);
-				
-				// Make a new copy in the core
-				core.addProcess(instructions, address);
-				
-				// Create a new process to execute
-				Process newProcess = new Process(address, process.length());
-				processes.add(newProcess);
-				
-				// Update the unique genomes repository
-				genomes.put(hash(instructions), instructions);
-				
-				// Exit the loop
-				break;
-			}
-			else if (nopSled)
-			{
-				// Get a copy of the instructions for
-				// the process
-				String[] instructions = core.getInstructions(process);
-				
-				// Make a new copy in the core, but do not create 
-				// a new process to execute them, the host process
-				// will do this
-				core.addProcess(instructions, address);
-				
-				// Exit the loop
-				break;
-			}
-		}
-	}
-	
-	/**
-	 * Copies a NOP to a random location in the core that is not
-	 * empty and not part of the process executing the copy (i.e.
-	 * the NOP should land within another executing process, possibly
-	 * disrupting its operation).
-	 * 
-	 * @param process The process launching the NOP bom
-	 */
-	private void copyNOP(Process process)
-	{
-		//TODO
-	}
-	
-	/**
 	 * Executes the current set of Processes, allowing each
 	 * one to execute and instruction in turn. Kills any Process
 	 * which has reached the end of its lifetime.
@@ -309,29 +196,32 @@ public class CPU
 						
 					break;
 						
-				case Process.NOP:
+				case Instructions.NOP:
 					// Do nothing
+					
+					//TODO
+					// Change NOP ref to Instructions.NOP
 						
 					break;
 					
-				case Process.JMP:
+				case Instructions.JMP:
 					// Modify the instruction pointer
-					movePtr(process, instruction);
+					Instructions.movePtr(process, instruction);
 						
 					break;
 						
-				case Process.SPW:
+				case Instructions.SPW:
 					// Spawn a copy of this process in
 					// a random location in the core
 					newProcesses.add(process);
 						
 					break;
 						
-				case Process.CPN:
+				case Instructions.CPN:
 					// Copy a NOP to a random location
 					// in the core that is not empty and
 					// not occupied by this process
-					copyNOP(process);
+					Instructions.copyNOP(process);
 						
 					break;
 						
@@ -362,7 +252,18 @@ public class CPU
 		// Add newly created processes
 		for (Process process: newProcesses)
 		{
-			spawnProcess(process);
+			int address = Instructions.spawnProcess(core, process);
+			
+			if (address != -1)
+			{
+				// Add to the process list
+				Process newProcess = new Process(address, process.length());
+				processes.add(newProcess);
+			
+				// Update the unique genomes repository
+				String[] instructions = core.getInstructions(newProcess);
+				genomes.put(hash(instructions), instructions);
+			}
 		}
 	}
 		

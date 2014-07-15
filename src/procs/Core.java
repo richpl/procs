@@ -80,7 +80,7 @@ public class Core
 			
 			if (!core[location].equals(Core.EMPTY)
 				&&
-				!core[location].equals(Process.NOP))
+				!core[location].equals(Instructions.NOP))
 			{
 				isSpace = false;
 			}
