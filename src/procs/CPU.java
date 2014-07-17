@@ -206,7 +206,7 @@ public class CPU
 					
 				case Instructions.JMP:
 					// Modify the instruction pointer
-					Instructions.movePtr(process, instruction);
+					Instructions.movePtr(core, process, instruction);
 						
 					break;
 						
@@ -221,7 +221,7 @@ public class CPU
 					// Copy a NOP to a random location
 					// in the core that is not empty and
 					// not occupied by this process
-					Instructions.copyNOP(process);
+					Instructions.copyNOP(core, process);
 						
 					break;
 						

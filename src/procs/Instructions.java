@@ -57,11 +57,12 @@ public class Instructions
 	 * Modifies the instruction pointer in response to a JMP
 	 * instruction
 	 * 
+	 * @param core The core containing the process
 	 * @param process The process whose instruction pointer is
 	 * to be modified
 	 * @param instruction The JMP instruction
 	 */
-	public static void movePtr(Process process, String instruction)
+	public static void movePtr(Core core, Process process, String instruction)
 	{
 		//TODO
 	}
@@ -72,9 +73,10 @@ public class Instructions
 	 * the NOP should land within another executing process, possibly
 	 * disrupting its operation).
 	 * 
-	 * @param process The process launching the NOP bom
+	 * @param core The core containing the process
+	 * @param process The process launching the NOP bomb
 	 */
-	public static void copyNOP(Process process)
+	public static void copyNOP(Core core, Process process)
 	{
 		//TODO
 	}
