@@ -241,6 +241,9 @@ public class CPU
 				deadProcesses.add(process);
 			}
 			
+			// Swap instructions between nearby processes
+			//TODO
+			
 		}
 	
 		// Dispose of processes to be killed
