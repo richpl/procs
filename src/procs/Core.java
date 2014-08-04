@@ -183,6 +183,27 @@ public class Core
 	}
 	
 	/**
+	 * Sets the instruction to be stored at the specified address,
+	 * expressed as a string
+	 * 
+	 * @param address The address of the instruction
+	 * @param instruction The instruction to be inserted
+	 * 
+	 * @throws IndexOutOfBoundsException Signals that the specified
+	 * address was outside the bounds of the Core
+	 */
+	public void setInstruction(final String instruction, final int address)
+		throws IndexOutOfBoundsException
+	{
+		if (address < 0 || address >= core.length)
+		{
+			throw new IndexOutOfBoundsException("Invalid core address specified");
+		}
+		
+		core[address] = instruction;
+	}
+	
+	/**
 	 * Returns a string representation of the process, as a bracketed
 	 * list of instructions.
 	 * 

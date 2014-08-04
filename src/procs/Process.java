@@ -85,6 +85,15 @@ public class Process
 	}
 	
 	/**
+	 * Increments the number of instruction executions
+	 * performed by this process
+	 */
+	public void incrementNumExecutions()
+	{
+		numExecutions++;
+	}
+	
+	/**
 	 * Increments the instruction pointer, wrapping around
 	 * to the first instruction if necessary.
 	 */
@@ -97,8 +106,20 @@ public class Process
 			// We have gone beyond the last instruction
 			ptr = 0;
 		}
-		
-		numExecutions++;
 	}
 	
+	/**
+	 * Decrements the instruction pointer, wrapping around
+	 * to the last instruction if necessary.
+	 */
+	public void decrementPtr()
+	{
+		ptr--;
+		
+		if (ptr == -1)
+		{
+			// We have gone beyond the first instruction
+			ptr = length-1;
+		}
+	}
 }

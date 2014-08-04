@@ -206,7 +206,7 @@ public class CPU
 					
 				case Instructions.JMP:
 					// Modify the instruction pointer
-					Instructions.movePtr(core, process, instruction);
+					Instructions.movePtr(process, instruction);
 						
 					break;
 						
@@ -233,6 +233,9 @@ public class CPU
 			
 			// Increment the instruction pointer
 			process.incrementPtr();
+			
+			// Increment the number of executions
+			process.incrementNumExecutions();
 			
 			// Check if the lifetime has been exceeded
 			if (process.numExecutions() > CPU.LIFETIME)

@@ -38,8 +38,26 @@ public class InstructionsTest
 
 	@Test
 	public final void testMovePtr() 
-	{
-		fail("Not yet implemented"); // TODO
+	{		
+		// Test a jump forward without wrap around
+		Instructions.movePtr(process, "JMP 4");
+		assertTrue("Invalid instruction pointer value",
+				   process.ptr() == 3);
+		
+		// Test a jump forward with wrap around
+		Instructions.movePtr(process, "JMP 4");
+		assertTrue("Invalid instruction pointer value",
+				   process.ptr() == 1);
+		
+		// Test a jump backward without wrap around
+		Instructions.movePtr(process, "JMP -1");
+		assertTrue("Invalid instruction pointer value",
+				   process.ptr() == 0);
+		
+		// Test a jump backward with wrap around
+		Instructions.movePtr(process, "JMP -4");
+		assertTrue("Invalid instruction pointer value",
+				   process.ptr() == 1);
 	}
 
 	@Test

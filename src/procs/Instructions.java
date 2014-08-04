@@ -1,6 +1,8 @@
 package procs;
 
+import java.util.NoSuchElementException;
 import java.util.Random;
+import java.util.StringTokenizer;
 
 /**
  * Provides static methods that implement instructions.
@@ -57,28 +59,123 @@ public class Instructions
 	 * Modifies the instruction pointer in response to a JMP
 	 * instruction
 	 * 
-	 * @param core The core containing the process
 	 * @param process The process whose instruction pointer is
 	 * to be modified
 	 * @param instruction The JMP instruction
 	 */
-	public static void movePtr(Core core, Process process, String instruction)
+	public static void movePtr(Process process, String instruction)
 	{
-		//TODO
+		// Parse out the jump instruction to see how
+		// far to move the instruction pointer
+		try
+		{
+			StringTokenizer st = new StringTokenizer(instruction);
+		
+			try
+			{
+				String command = st.nextToken();
+				if (command.equals(Instructions.JMP))
+				{
+					// Only process if we have a valid jump instruction,
+					// now obtain jump value
+					String jumpVal = st.nextToken();
+					
+					// Check that this is a valid numeral
+					try
+					{
+						int value = new Integer(jumpVal);
+						
+						// Move the instruction pointer the 
+						// specified number of steps, wrapping
+						// around as necessary						
+						if (value >= 0)
+						{
+							// Increment the instruction pointer
+							for (int index=1; index<value; index++)
+							{
+								process.incrementPtr();
+							}
+						}
+						else
+						{
+							// Decrement the instruction pointer
+							for (int index=0; index>value; index--)
+							{
+								process.decrementPtr();
+							}
+						}
+					}
+					catch (NumberFormatException e)
+					{
+						System.err.println("Invalid jump value encountered");
+					}
+				}
+			} 
+			catch (NoSuchElementException e)
+			{
+				System.err.println("Incomplete jump instruction encountered");
+			}
+		}
+		catch (NullPointerException e)
+		{
+			System.err.println("Null instruction found when jumping");
+		}
 	}
 	
 	/**
 	 * Copies a NOP to a random location in the core that is not
 	 * empty and not part of the process executing the copy (i.e.
 	 * the NOP should land within another executing process, possibly
-	 * disrupting its operation).
+	 * disrupting its operation). NOP bombs can only be launched
+	 * upon parts of the core near to the process which launches them. The
+	 * effective range is decided by the specified parameter (which is
+	 * applied modulo the core size). The range could be either before or
+	 * after the process in the core (i.e. a range of 100 will cause 
+	 * a NOP bomb to land anywhere within 100 locations either before
+	 * the start or after the end location of the process).
 	 * 
 	 * @param core The core containing the process
 	 * @param process The process launching the NOP bomb
+	 * @param range Range over which to launch the NOP bomb
 	 */
-	public static void copyNOP(Core core, Process process)
+	public static void copyNOP(Core core, Process process, int range)
 	{
-		//TODO
+		Random random = new Random();
+		
+		// Get a random value within the range, adding one to the
+		// answer in case we get a zero
+		int bombRange = random.nextInt(range) + 1;
+		
+		int location;
+		
+		// Randomly decide whether or not to make it negative
+		int makeNegative = random.nextInt(1);
+		if (makeNegative == 0)
+		{
+			bombRange = 0 - bombRange;
+			
+			// Now obtain the value at the relevant location
+			// in the core
+			
+			// Examine the potential NOP bomb location
+			location = (process.address() - bombRange) % core.size();
+		}
+		else
+		{
+			// Now obtain the value at the relevant location
+			// in the core
+			// Get location of last address of process
+			int lastAddress = 
+					(process.address() + process.length()-1) % core.size();
+			
+			// Examine the potential NOP bomb location
+			location = (lastAddress + bombRange) % core.size();
+		}
+		
+		if (!core.getInstruction(location).equals(Core.EMPTY))
+		{
+			core.setInstruction(Instructions.NOP, location);
+		}
 	}
 	
 	/**
