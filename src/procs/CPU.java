@@ -37,6 +37,12 @@ public class CPU
 	 */
 	public static final int CORE_SIZE = 10000;
 	
+	/**
+	 * Range of NOP bombs, in terms of number of core
+	 * locations
+	 */
+	public static final int RANGE = 100;
+	
 	// List of current Processes, defined as a list 
 	// of core addresses that hold their first instruction
 	private List<Process> processes;
@@ -221,7 +227,7 @@ public class CPU
 					// Copy a NOP to a random location
 					// in the core that is not empty and
 					// not occupied by this process
-					Instructions.copyNOP(core, process);
+					Instructions.copyNOP(core, process, RANGE);
 						
 					break;
 						

@@ -126,7 +126,11 @@ public class Instructions
 	 * Copies a NOP to a random location in the core that is not
 	 * empty and not part of the process executing the copy (i.e.
 	 * the NOP should land within another executing process, possibly
-	 * disrupting its operation). NOP bombs can only be launched
+	 * disrupting its operation). Will try a number of times to achieve this
+	 * if an empty location is selected, the number of tries being 
+	 * governed by the ATTEMPTS constant.
+	 * 
+	 * NOP bombs can only be launched
 	 * upon parts of the core near to the process which launches them. The
 	 * effective range is decided by the specified parameter (which is
 	 * applied modulo the core size). The range could be either before or
@@ -150,31 +154,42 @@ public class Instructions
 		
 		// Randomly decide whether or not to make it negative
 		int makeNegative = random.nextInt(1);
-		if (makeNegative == 0)
+		
+		// Have ten attempts at spawning the process
+		for (int attempts=0; attempts<ATTEMPTS; attempts++)
 		{
-			bombRange = 0 - bombRange;
+			if (makeNegative == 0)
+			{			
+				// Now obtain the value at the relevant location
+				// in the core
 			
-			// Now obtain the value at the relevant location
-			// in the core
-			
-			// Examine the potential NOP bomb location
-			location = (process.address() - bombRange) % core.size();
-		}
-		else
-		{
-			// Now obtain the value at the relevant location
-			// in the core
-			// Get location of last address of process
-			int lastAddress = 
+				// Examine the potential NOP bomb location,
+				// taking care to wrap around if we reach the start of the core
+				if (process.address() < bombRange)
+				{
+					//TODO
+				}
+				location = (process.address() - bombRange) % core.size(); //TODO
+			}
+			else
+			{
+				// Now obtain the value at the relevant location
+				// in the core
+				// Get location of last address of process
+				int lastAddress = 
 					(process.address() + process.length()-1) % core.size();
 			
-			// Examine the potential NOP bomb location
-			location = (lastAddress + bombRange) % core.size();
-		}
+				// Examine the potential NOP bomb location
+				location = (lastAddress + bombRange) % core.size();
+			}
 		
-		if (!core.getInstruction(location).equals(Core.EMPTY))
-		{
-			core.setInstruction(Instructions.NOP, location);
+			if (!core.getInstruction(location).equals(Core.EMPTY))
+			{
+				core.setInstruction(Instructions.NOP, location);
+				
+				// Exit the loop
+				break;
+			}
 		}
 	}
 	

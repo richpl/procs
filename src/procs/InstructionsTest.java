@@ -21,6 +21,9 @@ public class InstructionsTest
 	
 	private final int CORE_SIZE = 10;
 	
+	// NOP bomb range
+	private final int RANGE = 4;
+	
 	@Before
 	public void setUp() throws Exception 
 	{
@@ -63,7 +66,30 @@ public class InstructionsTest
 	@Test
 	public final void testCopyNOP() 
 	{
-		fail("Not yet implemented"); // TODO
+		// Fill remainder of core with other instructions
+		// so that NOP bomb will work
+		for (int index=process.address()+process.length();
+			 index<core.size(); index++)
+		{
+			core.setInstruction(Instructions.CPN, index);
+		}
+		
+		Instructions.copyNOP(core, process, RANGE);
+		
+		// One of the CPN instructions should have been
+		// replaced by a NOP
+		boolean foundNOP = false;
+		
+		for (int index=process.address()+process.length();
+				 index<core.size(); index++)
+		{
+				if (core.getInstruction(index).equals(Instructions.NOP))
+				{
+					foundNOP = true;
+				}
+		}
+		
+		assertTrue("NOP bomb not launched", foundNOP);
 	}
 
 	@Test
