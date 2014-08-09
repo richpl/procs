@@ -35,13 +35,20 @@ public class CPU
 	/**
 	 * Number of addresses that the Core can store
 	 */
-	public static final int CORE_SIZE = 10000;
+	public static final int CORE_SIZE = 100000;
 	
 	/**
 	 * Range of NOP bombs, in terms of number of core
 	 * locations
 	 */
 	public static final int RANGE = 100;
+	
+	/**
+	 * Probability, expressed as a percentage, that
+	 * two nearby processes will swap instructions
+	 * during a particular execution cycle 
+	 */
+	public static final int SWAP_PROB = 1;
 	
 	// List of current Processes, defined as a list 
 	// of core addresses that hold their first instruction
@@ -171,6 +178,9 @@ public class CPU
 	 * one to execute and instruction in turn. Kills any Process
 	 * which has reached the end of its lifetime.
 	 * 
+	 * With a random probability, will cause two nearby processes 
+	 * to possibly swap instructions once per execution cycle.
+	 * 
 	 * @throws IndexOutOfBoundsException Signals that an invalid core
 	 * address was specified
 	 */
@@ -204,9 +214,6 @@ public class CPU
 						
 				case Instructions.NOP:
 					// Do nothing
-					
-					//TODO
-					// Change NOP ref to Instructions.NOP
 						
 					break;
 					
@@ -250,8 +257,30 @@ public class CPU
 				deadProcesses.add(process);
 			}
 			
-			// Swap instructions between nearby processes
-			//TODO
+			// Swap instructions between nearby processes, with
+			// a given probability
+			int swapProb = random.nextInt(100);
+			if (swapProb <= SWAP_PROB)
+			{
+				// Swap instructions, if possible, between
+				// two processes that are less than 100
+				// locations apart
+				int range = random.nextInt(100);
+				int location1 = random.nextInt(CORE_SIZE);
+				int location2 = (location1 + range) % CORE_SIZE;
+				
+				// If neither location is empty, swap
+				String instruction1 = core.getInstruction(location1);
+				String instruction2 = core.getInstruction(location2);
+				
+				if (!instruction1.equals(Core.EMPTY) &&
+					!instruction2.equals(Core.EMPTY))
+				{
+					core.setInstruction(instruction2, location1);
+					core.setInstruction(instruction1, location2);
+				}
+				
+			}
 			
 		}
 	

@@ -167,9 +167,14 @@ public class Instructions
 				// taking care to wrap around if we reach the start of the core
 				if (process.address() < bombRange)
 				{
-					//TODO
+					int partialRange = bombRange - process.address();
+					
+					location = core.size() - partialRange;
 				}
-				location = (process.address() - bombRange) % core.size(); //TODO
+				else
+				{
+					location = process.address() - bombRange;
+				}
 			}
 			else
 			{
