@@ -31,7 +31,7 @@ public class InstructionsTest
 		core = new Core(CORE_SIZE);
 		process = new Process(ADDRESS, ancestor.length);
 		
-		core.addProcess(ancestor, ADDRESS);
+		core.addProcess(ancestor, ADDRESS, process);
 	}
 
 	@After

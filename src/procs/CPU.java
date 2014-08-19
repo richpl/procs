@@ -3,6 +3,7 @@ package procs;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.util.Arrays;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
@@ -30,7 +31,7 @@ public class CPU
 	 * instructions it can execute before it is killed
 	 * and removed from the core.
 	 */
-	public static final int LIFETIME = 100000;
+	public static final int LIFETIME = 100;
 	
 	/**
 	 * Number of addresses that the Core can store
@@ -108,17 +109,17 @@ public class CPU
 		try
 		{
 			// Get a random location in the Core
-			random = new Random();
+			random = new Random(new Date().getTime());
 			int address = random.nextInt(CORE_SIZE);
-		
-			// Add the process at that location
-			core.addProcess(ancestor, address);
 		
 			// Create a corresponding Process and add it to the list
 			// of current processes
 			Process process = new Process(address, ancestor.length);
 			processes.add(process);
 		
+			// Add the process at that location
+			core.addProcess(ancestor, address, process);
+			
 			// Register in the table of unique processes and process 
 			// lifetimes
 			genomes.put(hash(ancestor), ancestor);
@@ -256,32 +257,6 @@ public class CPU
 				// Kill the process
 				deadProcesses.add(process);
 			}
-			
-			// Swap instructions between nearby processes, with
-			// a given probability
-			int swapProb = random.nextInt(100);
-			if (swapProb <= SWAP_PROB)
-			{
-				// Swap instructions, if possible, between
-				// two processes that are less than 100
-				// locations apart
-				int range = random.nextInt(100);
-				int location1 = random.nextInt(CORE_SIZE);
-				int location2 = (location1 + range) % CORE_SIZE;
-				
-				// If neither location is empty, swap
-				String instruction1 = core.getInstruction(location1);
-				String instruction2 = core.getInstruction(location2);
-				
-				if (!instruction1.equals(Core.EMPTY) &&
-					!instruction2.equals(Core.EMPTY))
-				{
-					core.setInstruction(instruction2, location1);
-					core.setInstruction(instruction1, location2);
-				}
-				
-			}
-			
 		}
 	
 		// Dispose of processes to be killed
@@ -305,6 +280,31 @@ public class CPU
 				String[] instructions = core.getInstructions(newProcess);
 				genomes.put(hash(instructions), instructions);
 			}
+		}
+		
+		// Swap instructions between nearby processes, with
+		// a given probability		
+		int swapProb = random.nextInt(100);
+		if (swapProb < SWAP_PROB)
+		{
+			// Swap instructions, if possible, between
+			// two processes that are less than 100
+			// locations apart
+			int range = random.nextInt(100);
+			int location1 = random.nextInt(CORE_SIZE);
+			int location2 = (location1 + range) % CORE_SIZE;
+			
+			// If neither location is empty, swap
+			String instruction1 = core.getInstruction(location1);
+			String instruction2 = core.getInstruction(location2);
+			
+			if (!instruction1.equals(Core.EMPTY) &&
+				!instruction2.equals(Core.EMPTY))
+			{
+				core.setInstruction(instruction2, location1);
+				core.setInstruction(instruction1, location2);
+			}
+			
 		}
 	}
 		
@@ -377,14 +377,21 @@ public class CPU
 	
 	public static void main(String[] args)
 	{
-		CPU cpu = new CPU();
-		
-		// Carry out ten executions
-		for (int index=0; index<1000; index++)
+		try
 		{
-			cpu.execute();
+			CPU cpu = new CPU();
+		
+			// Carry out ten executions
+			for (int index=0; index<1000; index++)
+			{
+				cpu.execute();
 			
-			cpu.prettyPrintMetrics();
+				cpu.prettyPrintMetrics();
+			}
+		}
+		catch (Exception e)
+		{
+			System.err.println(e.getMessage());
 		}
 	}
 }

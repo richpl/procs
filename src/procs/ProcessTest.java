@@ -31,6 +31,7 @@ public class ProcessTest
 		for (int index=0; index<200; index++)
 		{
 			process.incrementPtr();
+			process.incrementNumExecutions();
 		}
 		
 		assertEquals("Incorrect number of executions", 

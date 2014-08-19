@@ -1,5 +1,8 @@
 package procs;
 
+import java.util.Date;
+import java.util.Random;
+
 /**
  * Models a simple computer memory capable of hosting multiple
  * instances of the Process type. The memory consists of a circular
@@ -20,6 +23,15 @@ public class Core
 	public static final String EMPTY = "";
 	
 	/**
+	 * Probability, expressed as a percentage, that a single
+	 * instruction will be randomly changed when a process
+	 * is copied in the core.
+	 */
+	public static final int MUTATE_PROB = 1;
+	
+	private Random random;
+	
+	/**
 	 * Constructs a new Core of the specified size
 	 * 
 	 * @param size The number of addresses to be contained
@@ -34,6 +46,10 @@ public class Core
 		{
 			core[index] = Core.EMPTY;
 		}
+		
+		// Initialise the random number generator
+		// that governs the mutation rate
+		random = new Random(new Date().getTime());
 	}
 	
 	/** 
@@ -53,12 +69,14 @@ public class Core
 	 * @param instructions The instructions to be added, as an ordered
 	 * list of strings
 	 * @param address The address at which to add the Process
+	 * @param process Handle for the process which is being added
 	 * 
 	 * @throws IndexOutOfBoundsException Signals that the process
 	 * contained too many instructions to be accommodated within
 	 * the Core
 	 */
-	public void addProcess(final String[] instructions, final int address)
+	public void addProcess(final String[] instructions, final int address,
+			               Process process)
 		throws IndexOutOfBoundsException
 	{
 		if (address < 0 || address >= core.length)
@@ -94,9 +112,37 @@ public class Core
 			{
 				int location = (index+address) % core.length;
 
-				core[location] = instructions[index];
+				core[location] = mutate(instructions[index]);
 			}
 		}
+	}
+	
+	/**
+	 * Returns a new instruction which replaces the
+	 * specified instruction with a probability determined
+	 * by the MUTATE_PROB value.
+	 * 
+	 * @param instruction The instruction to be mutated
+	 * 
+	 * @return The mutated instruction
+	 */
+	private String mutate(final String instruction)
+	{
+		String newInstruction = instruction;
+		
+		// Only mutate the instructions if the probability
+		// threshold is met
+		int mutationProbability = random.nextInt(100);
+		if (mutationProbability < MUTATE_PROB)
+		{
+			//TODO
+			
+			// Need to mutate individual instructions, and find a way of
+			// removing instructions from the genome, as well as adding, if 
+			// there is room
+		}
+		
+		return (newInstruction);
 	}
 	
 	/**

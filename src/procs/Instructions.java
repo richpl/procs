@@ -1,5 +1,6 @@
 package procs;
 
+import java.util.Date;
 import java.util.NoSuchElementException;
 import java.util.Random;
 import java.util.StringTokenizer;
@@ -144,7 +145,7 @@ public class Instructions
 	 */
 	public static void copyNOP(Core core, Process process, int range)
 	{
-		Random random = new Random();
+		Random random = new Random(new Date().getTime());
 		
 		// Get a random value within the range, adding one to the
 		// answer in case we get a zero
@@ -217,7 +218,7 @@ public class Instructions
 	 */
 	public static int spawnProcess(Core core, Process process)
 	{
-		Random random = new Random();
+		Random random = new Random(new Date().getTime());
 		
 		int newAddress = -1;
 		
@@ -263,7 +264,7 @@ public class Instructions
 				String[] instructions = core.getInstructions(process);
 				
 				// Make a new copy in the core
-				core.addProcess(instructions, address);
+				core.addProcess(instructions, address, process);
 				
 				// Returned address if process successfully
 				// spawned
@@ -280,4 +281,5 @@ public class Instructions
 		
 		return (newAddress);
 	}
+	
 }
