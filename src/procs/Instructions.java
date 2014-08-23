@@ -154,13 +154,15 @@ public class Instructions
 		int location;
 		
 		// Randomly decide whether or not to make it negative
-		int makeNegative = random.nextInt(1);
+		int makeNegative = random.nextInt(2);
 		
 		// Have ten attempts at spawning the process
 		for (int attempts=0; attempts<ATTEMPTS; attempts++)
 		{
 			if (makeNegative == 0)
 			{			
+				// Place NOP before the process
+				
 				// Now obtain the value at the relevant location
 				// in the core
 			
@@ -179,6 +181,8 @@ public class Instructions
 			}
 			else
 			{
+				// Place NOP after the process
+				
 				// Now obtain the value at the relevant location
 				// in the core
 				// Get location of last address of process

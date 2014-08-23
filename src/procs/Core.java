@@ -39,6 +39,10 @@ public class Core
 	 */
 	public Core(final int size)
 	{
+		// Add mutation probability as a parameter so that unit
+		// testing is predictable
+		// TODO
+		
 		// Initialise the core with null strings representing
 		// empty addresses
 		core = new String[size];
@@ -64,7 +68,9 @@ public class Core
 
 	/**
 	 * Adds a list of instructions to the Core, with its initial 
-	 * instruction at the specified address
+	 * instruction at the specified address. Will mutate one or more
+	 * of the copies (either changing, removing or adding an instruction)
+	 * with a probability dictated by MUTATE_PROB.
 	 * 
 	 * @param instructions The instructions to be added, as an ordered
 	 * list of strings
@@ -112,7 +118,7 @@ public class Core
 			{
 				int location = (index+address) % core.length;
 
-				core[location] = mutate(instructions[index]);
+				core[location] = mutate(instructions[index], process, index);
 			}
 		}
 	}
@@ -123,10 +129,15 @@ public class Core
 	 * by the MUTATE_PROB value.
 	 * 
 	 * @param instruction The instruction to be mutated
+	 * @param process The new process being created
+	 * @param index The position within the process of the
+	 * specified instruction
 	 * 
 	 * @return The mutated instruction
 	 */
-	private String mutate(final String instruction)
+	private String mutate(String instruction,
+						  Process process,
+						  int index)
 	{
 		String newInstruction = instruction;
 		
@@ -135,11 +146,155 @@ public class Core
 		int mutationProbability = random.nextInt(100);
 		if (mutationProbability < MUTATE_PROB)
 		{
-			//TODO
+			// Set up some random numbers to govern the 
+			// nature of the mutation and the new instruction
+			// type
+			int mutationType = random.nextInt(100);
 			
-			// Need to mutate individual instructions, and find a way of
-			// removing instructions from the genome, as well as adding, if 
-			// there is room
+			// If the instruction is already a jump, strip
+			// off the value before the switch test
+			if (instruction.startsWith(Instructions.JMP))
+			{
+				instruction = Instructions.JMP;
+			}
+			
+			switch (instruction)
+			{
+				case Instructions.CPN:
+					
+					if (mutationType <= 33)
+					{
+						newInstruction = Instructions.JMP;
+					}
+					else if (mutationType > 33 &&
+							 mutationType <= 66)
+					{
+						newInstruction = Instructions.NOP;
+					}
+					else
+					{
+						newInstruction = Instructions.SPW;
+					}
+					
+					break;
+					
+				case Instructions.JMP:
+					
+					if (mutationType <= 33)
+					{
+						newInstruction = Instructions.CPN;
+					}
+					else if (mutationType > 33 &&
+							 mutationType <= 66)
+					{
+						newInstruction = Instructions.NOP;
+					}
+					else
+					{
+						newInstruction = Instructions.SPW;
+					}
+					
+					break;
+					
+				case Instructions.NOP:
+					
+					if (mutationType <= 33)
+					{
+						newInstruction = Instructions.JMP;
+					}
+					else if (mutationType > 33 &&
+							 mutationType <= 66)
+					{
+						newInstruction = Instructions.CPN;
+					}
+					else
+					{
+						newInstruction = Instructions.SPW;
+					}
+					
+					break;
+					
+				case Instructions.SPW:
+					
+					if (mutationType <= 33)
+					{
+						newInstruction = Instructions.JMP;
+					}
+					else if (mutationType > 33 &&
+							 mutationType <= 66)
+					{
+						newInstruction = Instructions.NOP;
+					}
+					else
+					{
+						newInstruction = Instructions.CPN;
+					}
+					
+					break;
+					
+				default:
+					
+					// Should not occur
+					assert false;
+					
+					break;
+			}
+
+			// If we have converted to a jump, we have to add a 
+			// jump value
+			if (newInstruction.equals(Instructions.JMP))
+			{
+				// Variable to determine the range of the jump
+				int range = 0;
+				
+				// Decide whether to jump forward or back
+				int makeNegative = random.nextInt(2);
+				
+				if (makeNegative == 0)
+				{
+					// Jump backward
+					// Work out how many instructions before
+					// this one until the start of the process
+					int numInstructions = index;
+					
+					// Randomly pick a negative value in that range
+					try
+					{
+						range = 0 - random.nextInt(numInstructions+1);
+					}
+					catch (IllegalArgumentException e)
+					{
+						range = 0;
+					}
+				}
+				else
+				{
+					// Jump forward
+					// Work out how many instructions after
+					// this one until the end of the process
+					int numInstructions = process.length() - index;
+					
+					// Randomly pick a value in that range
+					try
+					{
+						range = random.nextInt(numInstructions);
+					}
+					catch (IllegalArgumentException e)
+					{
+						range = 0;
+					}
+				}
+
+				newInstruction = newInstruction + " "
+		                         + String.valueOf(range);
+				
+			}
+			
+			// Determine whether to insert and extra instruction
+			// TODO
+			
+			// Determine whether to delete an instruction
+			// TODO
 		}
 		
 		return (newInstruction);
