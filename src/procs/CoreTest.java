@@ -28,7 +28,7 @@ public class CoreTest
 	@Before
 	public void setUp() throws Exception 
 	{
-		core = new Core(CORE_SIZE);
+		core = new Core(CORE_SIZE, 0);
 		process = new Process(ADDRESS, ancestor.length);
 		
 		core.addProcess(ancestor, ADDRESS, process);

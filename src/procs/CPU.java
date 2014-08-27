@@ -31,7 +31,7 @@ public class CPU
 	 * instructions it can execute before it is killed
 	 * and removed from the core.
 	 */
-	public static final int LIFETIME = 100;
+	public static final int LIFETIME = 1000;
 	
 	/**
 	 * Number of addresses that the Core can store
@@ -49,7 +49,14 @@ public class CPU
 	 * two nearby processes will swap instructions
 	 * during a particular execution cycle 
 	 */
-	public static final int SWAP_PROB = 1;
+	public static final int SWAP_PROB = 0;
+	
+	/**
+	 * Probability, expressed as a percentage, that a single
+	 * instruction will be randomly changed when a process
+	 * is copied in the core.
+	 */
+	public static final int MUTATION_PROB = 1;
 	
 	// List of current Processes, defined as a list 
 	// of core addresses that hold their first instruction
@@ -88,7 +95,15 @@ public class CPU
 		
 		genomes = new HashMap<Integer, String[]>();
 		
-		core = new Core(CORE_SIZE);
+		try
+		{
+			core = new Core(CORE_SIZE, MUTATION_PROB);
+		}
+		catch (NumberFormatException e)
+		{
+			// MUTATION_PROB should be correct value
+			assert false;
+		}
 		
 		// Define the message digest algorithm to use
 		try 
@@ -381,8 +396,7 @@ public class CPU
 		{
 			CPU cpu = new CPU();
 		
-			// Carry out ten executions
-			for (int index=0; index<1000; index++)
+			for (int index=0; index<10000; index++)
 			{
 				cpu.execute();
 			

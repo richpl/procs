@@ -28,7 +28,7 @@ public class InstructionsTest
 	public void setUp() throws Exception 
 	{
 		// Create a core and add a process to it
-		core = new Core(CORE_SIZE);
+		core = new Core(CORE_SIZE, 0);
 		process = new Process(ADDRESS, ancestor.length);
 		
 		core.addProcess(ancestor, ADDRESS, process);
