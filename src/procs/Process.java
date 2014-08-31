@@ -85,6 +85,14 @@ public class Process
 	}
 	
 	/**
+	 * Modify the process length
+	 */
+	public void setLength(final int length)
+	{
+		this.length = length;
+	}
+	
+	/**
 	 * Increments the number of instruction executions
 	 * performed by this process
 	 */

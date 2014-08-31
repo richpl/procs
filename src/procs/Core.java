@@ -1,5 +1,6 @@
 package procs;
 
+import java.util.Arrays;
 import java.util.Date;
 import java.util.Random;
 
@@ -156,40 +157,101 @@ public class Core
 	private String[] mutateInstructions(final String[] instructions,
 										Process process)
 	{
-		// Make a copy of the instruction list
-		String[] newInstructions = new String[instructions.length];
-		for (int index=0; index< instructions.length; index++)
-		{
-			newInstructions[index] = instructions[index];
-		}
-		
-		// Pick a random location within the instruction string
-		int position = random.nextInt(instructions.length);
-		
-		// Get the instruction at that position
-		String instruction = newInstructions[position];
-		
+		String[] newInstructions;
+			
 		// Determine whether to introduce a mutation 
 		// which changes the instruction
 		int mutateProbability = random.nextInt(100);
 
 		if (mutateProbability < mutProb)
 		{
-			newInstructions[position] = 
-					mutateInstruction(instruction, position, instructions.length); 
+			// Pick a random location within the instruction string
+			int position = random.nextInt(instructions.length);
+			
+			// Use a further probability to determine
+			// the type of mutation
+			int mutTypeProbability = random.nextInt(100);
+			
+			if (mutTypeProbability < 33)
+			{
+				// Make a copy of the instruction list
+				newInstructions = new String[instructions.length];
+				for (int index=0; index<instructions.length; index++)
+				{
+					if (index != position)
+					{
+						newInstructions[index] = instructions[index];
+					}
+					else
+					{
+						newInstructions[index] = 
+								mutateInstruction(instructions[index], 
+										          position, 
+										          instructions.length);
+					}
+				}
+			}
+			else if (mutTypeProbability >= 33 &&
+					 mutTypeProbability < 66)
+			{
+				// Mutate by deleting an instruction
+				
+				//TODO - Fix this!!!!!!!! Bombs out when position is
+				// last element of array
+				String[] start = null;
+				String[] end = null;
+				try
+				{
+					start = 
+						Arrays.copyOfRange(instructions, 
+						                   0, position-1);
+				
+					end = 
+						Arrays.copyOfRange(instructions, 
+				                           position+1, 
+				                           instructions.length-1);
+				
+				}
+				catch (Exception e)
+				{
+					System.err.println("Help1: " + e.getMessage());
+				}
+				
+				newInstructions = new String[instructions.length-1];
+				
+				try
+				{
+					System.arraycopy(start, 0, newInstructions, 0, start.length);
+					System.arraycopy(end, 0, newInstructions, 
+									 start.length, end.length);
+				}
+				catch (Exception e)
+				{
+					System.err.println("Help: " + e.getMessage());
+				}
+				
+				// Reduce the corresponding process length
+				process.setLength(process.length() - 1);
+			}
+			else
+			{
+				// Mutate by adding an additional instruction and 
+				// modifying the corresponding process length
+				// TODO
+				newInstructions = new String[instructions.length];
+				for (int index=0; index< instructions.length; index++)
+				{
+					newInstructions[index] = instructions[index];
+				}
+			} 
+			
+			return (newInstructions);
 		}
 		else
 		{
-			// TODO
-			// Mutate by deleting and instruction and modifying
-			// the corresponding process length
-			
-			// TODO
-			// Mutate by adding an additonal instruction and 
-			// modifying the corresponding process length
+			// Return the instruction sequence unmodified
+			return (instructions);
 		}
-		
-		return (newInstructions);
 	}
 	
 	/**

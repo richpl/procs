@@ -31,7 +31,7 @@ public class CPU
 	 * instructions it can execute before it is killed
 	 * and removed from the core.
 	 */
-	public static final int LIFETIME = 1000;
+	public static final int LIFETIME = 100;
 	
 	/**
 	 * Number of addresses that the Core can store
@@ -396,7 +396,7 @@ public class CPU
 		{
 			CPU cpu = new CPU();
 		
-			for (int index=0; index<10000; index++)
+			for (int index=0; index<1000; index++)
 			{
 				cpu.execute();
 			
