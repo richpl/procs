@@ -31,7 +31,7 @@ public class CPU
 	 * instructions it can execute before it is killed
 	 * and removed from the core.
 	 */
-	public static final int LIFETIME = 100;
+	public static final int LIFETIME = 1000;
 	
 	/**
 	 * Number of addresses that the Core can store
@@ -169,6 +169,7 @@ public class CPU
 		{
 			md.update(instructions[index].getBytes());
 		}
+		
 		// Complete the digest with the final block
 		digest = md.digest(instructions[instructions.length-1].getBytes());
 		
@@ -322,39 +323,6 @@ public class CPU
 			
 		}
 	}
-		
-	/**
-	 * Returns a string representation of the instruction list, as a bracketed
-	 * list of instructions.
-	 * 
-	 * @param process The instruction list.
-	 * 
-	 * @return The string representation of the instructions.
-	 */
-	private String instructionsToString(String[] instructions)
-	{	
-		StringBuilder stringBuilder = new StringBuilder();
-		stringBuilder.append("[");
-		
-		boolean isFirst = true;
-		for (String instruction: instructions)
-		{
-			if (!isFirst)
-			{
-				stringBuilder.append(";");
-			}
-			else
-			{
-				isFirst = false;
-			}
-			
-			stringBuilder.append(instruction);
-		}
-		
-		stringBuilder.append("]");
-		
-		return (stringBuilder.toString());
-	}
 	
 	/**
 	 * Pretty prints the list of unique genomes present in the core.
@@ -370,7 +338,7 @@ public class CPU
 			
 			System.out.print(entry.getKey());
 			System.out.print(": ");
-			System.out.println(instructionsToString(entry.getValue()));
+			System.out.println(Arrays.deepToString(entry.getValue()));
 		}
 	}
 	
@@ -396,16 +364,21 @@ public class CPU
 		{
 			CPU cpu = new CPU();
 		
-			for (int index=0; index<1000; index++)
+			for (int index=0; index<1000000; index++)
 			{
 				cpu.execute();
 			
-				cpu.prettyPrintMetrics();
+				// Periodically print out the status
+				// of the core
+				if (index % 10000 == 0)
+				{
+					cpu.prettyPrintMetrics();
+				}
 			}
 		}
 		catch (Exception e)
 		{
-			System.err.println(e.getMessage());
+			e.printStackTrace();
 		}
 	}
 }

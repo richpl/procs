@@ -107,9 +107,12 @@ public class Core
 		// empty space however, either an empty location 
 		// or a NOP sled
 		
-		// First check that there is sufficient space
+		// First check that there is sufficient space, also checking
+		// if there is room for an extra instruction to accommodate a
+		// mutation that inserts and extra instruction
 		boolean isSpace = true;
-		for (int index=0;index<instructions.length;index++)
+		boolean isExtraSpace = true;
+		for (int index=0;index<=instructions.length;index++)
 		{
 			int location = (index+address) % core.length;
 			
@@ -117,7 +120,12 @@ public class Core
 				&&
 				!core[location].equals(Instructions.NOP))
 			{
-				isSpace = false;
+				if (index<instructions.length)
+				{
+					isSpace = false;
+				}
+				
+				isExtraSpace = false;
 			}
 
 		}
@@ -125,10 +133,7 @@ public class Core
 		// Mutate the instruction list with the specified
 		// probability
 		String[] newInstructions = 
-				mutateInstructions(instructions, process);
-		
-		// TODO
-		// Is there room for an extra instruction?
+				mutateInstructions(instructions, process, isExtraSpace);
 		
 		// Only add instructions if room
 		if (isSpace)
@@ -151,11 +156,14 @@ public class Core
 	 * @param instructions The instruction list to be mutated
 	 * @param process The process associated with the instruction
 	 * list
+	 * @param isExtraSpace Indicates whether there is room to
+	 * insert and extra instruction as part of a mutation
 	 * 
 	 * @return The mutant instruction list
 	 */
 	private String[] mutateInstructions(final String[] instructions,
-										Process process)
+										Process process,
+										boolean isExtraSpace)
 	{
 		String[] newInstructions;
 			
@@ -192,29 +200,32 @@ public class Core
 				}
 			}
 			else if (mutTypeProbability >= 33 &&
-					 mutTypeProbability < 66)
+					 mutTypeProbability < 66 &&
+					 instructions.length > 1)
 			{
-				// Mutate by deleting an instruction
-				
-				//TODO - Fix this!!!!!!!! Bombs out when position is
-				// last element of array
+				// Mutate by deleting an instruction, as long as
+				// the instruction list is more than one instruction
+				// long
 				String[] start = null;
 				String[] end = null;
 				try
 				{
 					start = 
 						Arrays.copyOfRange(instructions, 
-						                   0, position-1);
+						                   0, position);
 				
 					end = 
 						Arrays.copyOfRange(instructions, 
 				                           position+1, 
-				                           instructions.length-1);
+				                           instructions.length);
 				
 				}
 				catch (Exception e)
 				{
-					System.err.println("Help1: " + e.getMessage());
+					System.err.println("Error splitting instructions" + 
+		                       " prior to instruction deletion: " +
+					           e.getMessage());
+					assert false;
 				}
 				
 				newInstructions = new String[instructions.length-1];
@@ -227,23 +238,70 @@ public class Core
 				}
 				catch (Exception e)
 				{
-					System.err.println("Help: " + e.getMessage());
+					System.err.println("Error copying shortened " +
+		                       "instruction list: " + e.getMessage());
+					assert false;
 				}
 				
 				// Reduce the corresponding process length
 				process.setLength(process.length() - 1);
 			}
-			else
+			else if (isExtraSpace)
 			{
 				// Mutate by adding an additional instruction and 
 				// modifying the corresponding process length
-				// TODO
-				newInstructions = new String[instructions.length];
-				for (int index=0; index< instructions.length; index++)
+				String[] start = null;
+				String[] end = null;
+				try
 				{
-					newInstructions[index] = instructions[index];
+					start = 
+						Arrays.copyOfRange(instructions, 
+						                   0, position);
+				
+					end = 
+						Arrays.copyOfRange(instructions, 
+				                           position, 
+				                           instructions.length);
+				
 				}
-			} 
+				catch (Exception e)
+				{
+					System.err.println("Error splitting instructions" + 
+				                       " prior to instruction insertion: " +
+							           e.getMessage());
+					assert false;
+				}
+				
+				newInstructions = new String[instructions.length+1];
+				
+				// Copy the existing instructions into the new list,
+				// leaving a gap for the extra instruction
+				try
+				{
+					System.arraycopy(start, 0, newInstructions, 0, start.length);
+					System.arraycopy(end, 0, newInstructions, 
+									 start.length+1, end.length);
+				}
+				catch (Exception e)
+				{
+					System.err.println("Error copying lengthened " +
+				                       "instruction list: " + e.getMessage());
+					assert false;
+				}
+				
+				// Insert the new instruction into the right position.
+				// Add anything that is not a NOP
+				newInstructions[start.length] = 
+						newInstruction(start.length,
+							           newInstructions.length);
+				
+				// Reduce the corresponding process length
+				process.setLength(process.length() + 1);
+			}
+			else
+			{
+				return (instructions);
+			}
 			
 			return (newInstructions);
 		}
@@ -408,7 +466,105 @@ public class Core
 				}
 				catch (IllegalArgumentException e)
 				{
+					// Position may be at the end of the 
+					// instruction list
+					range = 0;
+				}
+			}
+
+			newInstruction = newInstruction + " "
+	                         + String.valueOf(range);
+			
+		}
+		
+		return (newInstruction);
+	}
+	
+	/**
+	 * Generates a new instruction that can be inserted into
+	 * a process as the result of a mutation.
+	 * 
+	 * @param position The length of the instruction list from
+	 * which the specified instruction comes, so that JMP
+	 * instructions can be generate correctly
+	 * @param length The length of the instruction list from
+	 * which the specified instruction comes, so that JMP
+	 * instructions can be generated correctly
+	 * 
+	 * @return The new instruction
+	 */
+	private String newInstruction(int position, int length)
+	{
+		String newInstruction;
+		
+		// Set up some random numbers to govern the 
+		// nature of the mutation and the new instruction
+		// type
+		int mutationType = random.nextInt(100);
+						
+		if (mutationType < 25)
+		{
+			newInstruction = Instructions.JMP;
+		}
+		else if (mutationType >= 25 &&
+				 mutationType < 50)
+		{
+			newInstruction = Instructions.NOP;
+		}
+		else if (mutationType >= 50 &&
+				 mutationType < 75)
+		{
+			newInstruction = Instructions.SPW;
+		}
+		else
+		{
+			newInstruction = Instructions.CPN;
+		}
+					
+		// If we have converted to a jump, we have to add a 
+		// jump value
+		if (newInstruction.equals(Instructions.JMP))
+		{
+			// Variable to determine the range of the jump
+			int range;
+				
+			// Decide whether to jump forward or back
+			int makeNegative = random.nextInt(2);
+				
+			if (makeNegative == 0)
+			{
+				// Jump backward
+				// Work out how many instructions before
+				// this one until the start of the process
+				int numInstructions = position;
+					
+				// Randomly pick a negative value in that range
+				try
+				{
+					range = 0 - random.nextInt(numInstructions+1);
+				}
+				catch (IllegalArgumentException e)
+				{
 					System.err.println("Illegal jump range calculated");
+					range = 0;
+				}
+			}
+			else
+			{
+				// Jump forward
+				// Work out how many instructions after
+				// this one until the end of the process
+				int numInstructions = length - position - 1;
+					
+				// Randomly pick a value in that range
+				try
+				{
+					range = random.nextInt(numInstructions);
+				}
+				catch (IllegalArgumentException e)
+				{
+					// Position may be at the end of the 
+					// instruction list
 					range = 0;
 				}
 			}
