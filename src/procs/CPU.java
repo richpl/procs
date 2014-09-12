@@ -68,6 +68,13 @@ public class CPU
 	// while the values are the instructions lists themselves
 	private Map<Integer, String[]> genomes;
 
+	// Map to hold details of the population size of 
+	// unique processes. Keys are created by hashing the string
+	// derived by concatenating the ordered Process instructions
+	// together, while the values are the association population
+	// size
+	private Map<Integer, Integer> population;
+	
 	// Core in which to execute Processes
 	private Core core;
 	
@@ -94,6 +101,8 @@ public class CPU
 		processes = new Vector<Process>();
 		
 		genomes = new HashMap<Integer, String[]>();
+		
+		population = new HashMap<Integer, Integer>();
 		
 		try
 		{
@@ -137,7 +146,11 @@ public class CPU
 			
 			// Register in the table of unique processes and process 
 			// lifetimes
-			genomes.put(hash(ancestor), ancestor);
+			int hashVal = hash(ancestor);
+						
+			genomes.put(hashVal, ancestor);
+			
+			population.put(hashVal,  1);
 		}
 		catch (IndexOutOfBoundsException e)
 		{
@@ -183,11 +196,21 @@ public class CPU
 	 */
 	private void killProcess(final Process process)
 	{
+		// Decrease the population measure
+		String[] instructions = core.getInstructions(process);
+		int hashVal = hash(instructions);
+		
+		if (population.containsKey(hashVal))
+		{
+			int popVal = population.get(hashVal);
+			population.put(hashVal, popVal - 1);
+		}
+		
 		// Remove its instructions from the Core
 		core.removeProcess(process);
 		
 		// Remove the Process from the execution list
-		processes.remove(process);		
+		processes.remove(process);	
 	}
 	
 	/**
@@ -294,7 +317,19 @@ public class CPU
 			
 				// Update the unique genomes repository
 				String[] instructions = core.getInstructions(newProcess);
-				genomes.put(hash(instructions), instructions);
+				int hashVal = hash(instructions);
+				genomes.put(hashVal, instructions);
+				
+				// Update the population repository
+				if (!population.containsKey(hashVal))
+				{
+					population.put(hashVal, 1);
+				}
+				else
+				{
+					int popVal = population.get(hashVal);
+					population.put(hashVal, popVal + 1);
+				}
 			}
 		}
 		
@@ -343,6 +378,24 @@ public class CPU
 	}
 	
 	/**
+	 * Pretty prints the populations of different process types.
+	 */
+	public void prettyPrintPopulation()
+	{
+		Set<Map.Entry<Integer, Integer>> entrySet = population.entrySet();
+		Iterator<Map.Entry<Integer, Integer>> iter = entrySet.iterator();
+		
+		while (iter.hasNext())
+		{
+			Map.Entry<Integer, Integer> entry = iter.next();
+			
+			System.out.print(entry.getKey());
+			System.out.print(": ");
+			System.out.println(entry.getValue());
+		}
+	}
+	
+	/**
 	 * Pretty prints metrics on currently executing processes,
 	 * including number of currently executing processes,
 	 * unique genomes present in the core, and distribution of 
@@ -352,10 +405,27 @@ public class CPU
 	{
 		System.out.println("Number of processes: " + processes.size());
 		System.out.println();
+
+		Set<Map.Entry<Integer, String[]>> entrySet = genomes.entrySet();
+		Iterator<Map.Entry<Integer, String[]>> iter = entrySet.iterator();
 		
-		System.out.println("Genomes:");
-		prettyPrintGenomes();
-		System.out.println();
+		while (iter.hasNext())
+		{
+			Map.Entry<Integer, String[]> entry = iter.next();
+			
+			System.out.print(entry.getKey());
+			System.out.print(": ");
+			System.out.print(population.get(entry.getKey()) + ", ");
+			System.out.println(Arrays.deepToString(entry.getValue()));
+		}
+				
+		//System.out.println("Genomes:");
+		//prettyPrintGenomes();
+		//System.out.println();
+		
+		//System.out.println("Population:");
+		//prettyPrintPopulation();
+		//System.out.println();
 	}
 	
 	public static void main(String[] args)
@@ -370,10 +440,10 @@ public class CPU
 			
 				// Periodically print out the status
 				// of the core
-				if (index % 10000 == 0)
-				{
+				//if (index % 10000 == 0)
+				//{
 					cpu.prettyPrintMetrics();
-				}
+				//}
 			}
 		}
 		catch (Exception e)
